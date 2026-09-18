@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MemoryCode – Advanced Memorization Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg:#0a0e1a; --bg2:#0f1628; --card:#141c35; --card2:#1a2444;
+    --accent:#00f5ff; --accent2:#7c3aed; --accent3:#f59e0b;
+    --green:#10b981; --red:#ef4444; --text:#e2e8f0; --text2:#94a3b8;
+    --border:rgba(0,245,255,0.2);
+    --glow:0 0 20px rgba(0,245,255,0.3); --glow2:0 0 30px rgba(124,58,237,0.4);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Rajdhani',sans-serif; background:var(--bg); color:var(--text);
+    min-height:100vh; overflow-x:hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 50%,rgba(124,58,237,0.08) 0%,transparent 60%),
+      radial-gradient(ellipse at 80% 20%,rgba(0,245,255,0.06) 0%,transparent 50%);
+  }
+  #particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+
+  /* ── SCREENS ── */
+  .screen{display:none;position:relative;z-index:1;min-height:100vh;padding:20px;}
+  .screen.active{display:flex;flex-direction:column;align-items:center;justify-content:center;}
+
+  /* ── HEADER ── */
+  .game-header{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 24px;
+    background:rgba(10,14,26,0.92);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+  }
+  .game-header .logo{
+    font-family:'Orbitron',sans-serif;font-size:1.05rem;font-weight:900;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .header-center{
+    display:flex;align-items:center;gap:16px;
+    font-family:'Orbitron',sans-serif;font-size:0.8rem;color:var(--text2);
+  }
+  .header-score{
+    background:rgba(0,245,255,0.08);border:1px solid var(--border);
+    border-radius:8px;padding:4px 12px;
+    font-size:0.85rem;color:var(--accent);font-weight:700;
+  }
+  .header-btns{display:flex;gap:8px;}
+  .icon-btn{
+    background:rgba(255,255,255,0.05);border:1px solid var(--border);
+    color:var(--text2);width:38px;height:38px;border-radius:8px;
+    cursor:pointer;font-size:0.9rem;transition:all 0.2s;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .icon-btn:hover{background:rgba(0,245,255,0.1);color:var(--accent);border-color:var(--accent);}
+  .icon-btn.active-pause{background:rgba(245,158,11,0.15);color:var(--accent3);border-color:var(--accent3);}
+
+  /* ── OVERLAYS ── */
+  .overlay{
+    display:none;position:fixed;inset:0;z-index:200;
+    background:rgba(0,0,0,0.75);backdrop-filter:blur(10px);
+    align-items:center;justify-content:center;
+  }
+  .overlay.open{display:flex;}
+
+  /* ── MENU CARD ── */
+  .menu-card{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:20px;padding:32px;width:340px;max-width:90vw;
+    box-shadow:var(--glow2);animation:popIn 0.3s ease;
+  }
+  .menu-card h2{
+    font-family:'Orbitron',sans-serif;font-size:1.2rem;
+    color:var(--accent);margin-bottom:24px;text-align:center;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+  }
+  .menu-item{
+    display:flex;align-items:center;gap:12px;
+    padding:14px 16px;border-radius:12px;cursor:pointer;
+    border:1px solid transparent;transition:all 0.2s;margin-bottom:8px;
+    font-size:1rem;font-weight:600;color:var(--text);
+    background:rgba(255,255,255,0.03);
+  }
+  .menu-item:hover{background:rgba(0,245,255,0.08);border-color:var(--border);}
+  .menu-item i{width:20px;color:var(--accent);}
+  .menu-item.danger{color:var(--red);}
+  .menu-item.danger i{color:var(--red);}
+  .menu-item.danger:hover{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.3);}
+  .menu-close{
+    width:100%;margin-top:8px;padding:12px;
+    background:rgba(255,255,255,0.05);border:1px solid var(--border);
+    border-radius:12px;color:var(--text2);cursor:pointer;
+    font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:600;
+    transition:all 0.2s;
+  }
+  .menu-close:hover{background:rgba(0,245,255,0.1);color:var(--accent);}
+
+  /* ── PAUSE CARD ── */
+  .pause-card{
+    background:var(--card);border:2px solid rgba(245,158,11,0.4);
+    border-radius:24px;padding:40px;text-align:center;
+    max-width:360px;width:90%;box-shadow:0 0 30px rgba(245,158,11,0.2);
+    animation:popIn 0.3s ease;
+  }
+  .pause-card h2{font-family:'Orbitron',sans-serif;color:var(--accent3);margin-bottom:8px;font-size:1.4rem;}
+  .pause-card p{color:var(--text2);margin-bottom:28px;font-size:1rem;}
+  .pause-btns{display:flex;flex-direction:column;gap:10px;}
+
+  /* ── HOME ── */
+  .home-logo{
+    font-family:'Orbitron',sans-serif;font-size:3rem;font-weight:900;
+    background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent3));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    text-align:center;margin-bottom:8px;
+    filter:drop-shadow(0 0 20px rgba(0,245,255,0.4));
+  }
+  .home-sub{color:var(--text2);font-size:1.1rem;text-align:center;margin-bottom:48px;letter-spacing:2px;text-transform:uppercase;}
+  .mode-grid{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-bottom:40px;}
+  .mode-card{
+    background:var(--card);border:2px solid var(--border);
+    border-radius:20px;padding:28px 32px;width:270px;cursor:pointer;
+    transition:all 0.3s;position:relative;overflow:hidden;text-align:center;
+  }
+  .mode-card::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,transparent,rgba(0,245,255,0.03));
+    opacity:0;transition:opacity 0.3s;
+  }
+  .mode-card:hover{transform:translateY(-6px);box-shadow:var(--glow);border-color:var(--accent);}
+  .mode-card:hover::before{opacity:1;}
+  .mode-card.extreme{border-color:rgba(239,68,68,0.4);}
+  .mode-card.extreme:hover{box-shadow:0 0 20px rgba(239,68,68,0.4);border-color:var(--red);}
+  .mode-icon{font-size:2.5rem;margin-bottom:12px;}
+  .mode-title{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:8px;}
+  .mode-desc{color:var(--text2);font-size:0.88rem;line-height:1.6;}
+  .mode-badge{display:inline-block;margin-top:12px;padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:700;letter-spacing:1px;}
+  .badge-normal{background:rgba(0,245,255,0.15);color:var(--accent);}
+  .badge-extreme{background:rgba(239,68,68,0.15);color:var(--red);}
+  .highscores{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:32px;}
+  .hs-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 20px;text-align:center;min-width:130px;}
+  .hs-label{font-size:0.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
+  .hs-val{font-family:'Orbitron',sans-serif;font-size:1.4rem;color:var(--accent3);font-weight:700;}
+
+  /* ── GAME SCREEN ── */
+  #gameScreen{padding-top:80px;}
+  .game-container{width:100%;max-width:720px;}
+
+  .progress-bar-wrap{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+  .progress-dots{display:flex;gap:6px;flex:1;}
+  .dot{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,0.1);transition:all 0.3s;}
+  .dot.done{background:var(--green);}
+  .dot.wrong{background:var(--red);}
+  .dot.current{background:var(--accent);box-shadow:0 0 8px var(--accent);}
+  .q-label{font-size:0.85rem;color:var(--text2);white-space:nowrap;font-family:'Orbitron',sans-serif;}
+
+  .mode-tag{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:4px 14px;border-radius:20px;font-size:0.8rem;font-weight:700;
+    margin-bottom:20px;letter-spacing:1px;
+  }
+  .mode-tag.normal{background:rgba(0,245,255,0.1);color:var(--accent);border:1px solid rgba(0,245,255,0.3);}
+  .mode-tag.extreme{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
+
+  /* ── MEMO PHASE ── */
+  .memo-card{
+    background:var(--card);border:2px solid var(--border);
+    border-radius:24px;padding:48px 40px;text-align:center;
+    box-shadow:var(--glow);position:relative;overflow:hidden;margin-bottom:20px;
+  }
+  .memo-card::after{
+    content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+    background:conic-gradient(transparent,rgba(0,245,255,0.04),transparent);
+    animation:rotate 5s linear infinite;
+  }
+  .memo-label{font-size:0.85rem;color:var(--text2);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;}
+  .memo-string{
+    font-family:'Orbitron',sans-serif;font-size:2.8rem;font-weight:900;
+    letter-spacing:5px;color:#fff;
+    text-shadow:0 0 30px var(--accent),0 0 60px rgba(0,245,255,0.3);
+    animation:fadeInScale 0.5s ease;position:relative;z-index:1;
+    word-break:break-all;
+  }
+  .memo-hint{font-size:0.9rem;color:var(--text2);margin-top:16px;position:relative;z-index:1;}
+  .difficulty-badge{
+    display:inline-block;margin-top:10px;padding:3px 10px;border-radius:10px;
+    font-size:0.72rem;font-weight:700;letter-spacing:1px;position:relative;z-index:1;
+  }
+  .diff-easy{background:rgba(16,185,129,0.15);color:var(--green);}
+  .diff-hard{background:rgba(239,68,68,0.15);color:var(--red);}
+  .diff-extreme{background:rgba(245,158,11,0.15);color:var(--accent3);}
+
+  /* ── TIMER ── */
+  .timer-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:20px;}
+  .timer-ring{position:relative;width:80px;height:80px;}
+  .timer-ring svg{transform:rotate(-90deg);}
+  .timer-ring circle{fill:none;stroke-width:6;}
+  .timer-bg{stroke:rgba(255,255,255,0.1);}
+  .timer-fg{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset 1s linear;}
+  .timer-fg.warning{stroke:var(--accent3);}
+  .timer-fg.danger{stroke:var(--red);}
+  .timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:700;}
+  .timer-label{font-size:0.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
+
+  /* ── MCQ PHASE ── */
+  .mcq-question{font-size:1.05rem;color:var(--text2);text-align:center;margin-bottom:20px;}
+  .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+  .option-btn{
+    background:var(--card);border:2px solid var(--border);
+    border-radius:14px;padding:16px 12px;cursor:pointer;
+    font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;
+    letter-spacing:2px;color:var(--text);transition:all 0.2s;
+    text-align:center;word-break:break-all;line-height:1.4;
+  }
+  .option-btn:hover:not(:disabled){
+    background:rgba(0,245,255,0.08);border-color:var(--accent);
+    transform:translateY(-2px);box-shadow:var(--glow);
+  }
+  .option-btn.correct{background:rgba(16,185,129,0.2);border-color:var(--green);color:var(--green);animation:popIn 0.3s ease;}
+  .option-btn.wrong{background:rgba(239,68,68,0.2);border-color:var(--red);color:var(--red);}
+  .option-btn:disabled{cursor:not-allowed;opacity:0.7;}
+
+  .feedback-msg{
+    text-align:center;font-size:1.15rem;font-weight:700;padding:14px;
+    border-radius:12px;margin-bottom:14px;display:none;
+  }
+  .feedback-msg.correct{background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3);}
+  .feedback-msg.wrong{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
+
+  /* ── SKIP BTN ── */
+  .skip-btn{
+    width:100%;padding:12px;background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.1);border-radius:12px;
+    color:var(--text2);cursor:pointer;font-family:'Rajdhani',sans-serif;
+    font-size:0.95rem;font-weight:600;transition:all 0.2s;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .skip-btn:hover:not(:disabled){background:rgba(245,158,11,0.1);color:var(--accent3);border-color:rgba(245,158,11,0.3);}
+  .skip-btn:disabled{opacity:0.35;cursor:not-allowed;}
+
+  /* ── SCORE SCREEN ── */
+  .score-card{
+    background:var(--card);border:2px solid var(--border);
+    border-radius:24px;padding:48px 40px;text-align:center;
+    max-width:520px;width:100%;box-shadow:var(--glow2);animation:popIn 0.5s ease;
+  }
+  .score-title{font-family:'Orbitron',sans-serif;font-size:1.4rem;color:var(--accent);margin-bottom:8px;}
+  .score-big{
+    font-family:'Orbitron',sans-serif;font-size:4rem;font-weight:900;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:16px 0;
+  }
+  .score-sub{color:var(--text2);font-size:1rem;margin-bottom:24px;}
+  .eligible-msg{
+    background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(0,245,255,0.1));
+    border:1px solid rgba(16,185,129,0.4);border-radius:16px;
+    padding:20px;margin-bottom:24px;animation:pulse 2s infinite;
+  }
+  .eligible-msg h3{color:var(--green);font-family:'Orbitron',sans-serif;font-size:1rem;margin-bottom:8px;}
+  .eligible-msg p{color:var(--text2);font-size:0.9rem;}
+  .score-breakdown{display:flex;gap:12px;justify-content:center;margin-bottom:28px;flex-wrap:wrap;}
+  .sb-item{background:var(--card2);border-radius:12px;padding:12px 20px;text-align:center;}
+  .sb-num{font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:700;}
+  .sb-lbl{font-size:0.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
+  .sb-num.green{color:var(--green);}
+  .sb-num.red{color:var(--red);}
+  .score-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+  .btn-primary{
+    padding:14px 28px;border-radius:12px;cursor:pointer;
+    font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;
+    border:none;transition:all 0.2s;letter-spacing:1px;
+  }
+  .btn-cyan{background:linear-gradient(135deg,var(--accent),#0099cc);color:#000;}
+  .btn-cyan:hover{transform:translateY(-2px);box-shadow:var(--glow);}
+  .btn-purple{background:linear-gradient(135deg,var(--accent2),#5b21b6);color:#fff;}
+  .btn-purple:hover{transform:translateY(-2px);box-shadow:var(--glow2);}
+  .btn-outline{
+    padding:14px 28px;border-radius:12px;cursor:pointer;
+    font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;
+    background:transparent;border:2px solid var(--border);color:var(--text2);
+    transition:all 0.2s;letter-spacing:1px;
+  }
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeInScale{from{opacity:0;transform:scale(0.8);}to{opacity:1;transform:scale(1);}}
+  @keyframes popIn{from{opacity:0;transform:scale(0.9);}to{opacity:1;transform:scale(1);}}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0.3);}50%{box-shadow:0 0 0 8px rgba(16,185,129,0);}}
+  @keyframes rotate{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
+  .shake{animation:shake 0.4s ease;}
+
+  /* ── FOOTER ── */
+  .footer{
+    position:fixed;bottom:0;left:0;right:0;text-align:center;padding:8px;
+    font-size:0.72rem;color:rgba(148,163,184,0.35);z-index:50;pointer-events:none;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:600px){
+    .home-logo{font-size:2rem;}
+    .memo-string{font-size:1.8rem;letter-spacing:3px;}
+    .options-grid{grid-template-columns:1fr;}
+    .mode-grid{flex-direction:column;align-items:center;}
+    .score-big{font-size:3rem;}
+    .header-center{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<!-- ══ GAME HEADER ══ -->
+<div class="game-header" id="gameHeader" style="display:none">
+  <div class="logo"><i class="fas fa-brain"></i> MemoryCode</div>
+  <div class="header-center">
+    <span id="headerQLabel" style="font-size:0.8rem"></span>
+    <span class="header-score" id="headerScore">0 pts</span>
+  </div>
+  <div class="header-btns">
+    <button class="icon-btn" id="skipHeaderBtn" title="Skip Question"><i class="fas fa-forward"></i></button>
+    <button class="icon-btn" id="pauseBtn" title="Pause"><i class="fas fa-pause"></i></button>
+    <button class="icon-btn" id="menuBtn" title="Menu"><i class="fas fa-bars"></i></button>
+  </div>
+</div>
+
+<!-- ══ MENU OVERLAY ══ -->
+<div class="overlay" id="menuOverlay">
+  <div class="menu-card">
+    <h2><i class="fas fa-bars"></i> Menu</h2>
+    <div class="menu-item" id="menuResume"><i class="fas fa-play"></i> Resume Game</div>
+    <div class="menu-item" id="menuRestart"><i class="fas fa-redo"></i> Restart Session</div>
+    <div class="menu-item" id="menuHome"><i class="fas fa-home"></i> Main Menu</div>
+    <div class="menu-item danger" id="menuClear"><i class="fas fa-trash"></i> Clear All Data</div>
+    <button class="menu-close" id="menuClose"><i class="fas fa-times"></i> Close</button>
+  </div>
+</div>
+
+<!-- ══ PAUSE OVERLAY ══ -->
+<div class="overlay" id="pauseOverlay">
+  <div class="pause-card">
+    <h2><i class="fas fa-pause-circle"></i> Paused</h2>
+    <p>Timers are frozen. Take a breath!</p>
+    <div class="pause-btns">
+      <button class="btn-primary btn-cyan" id="resumeBtn"><i class="fas fa-play"></i> Resume</button>
+      <button class="btn-outline" id="pauseMenuBtn"><i class="fas fa-bars"></i> Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ HOME SCREEN ══════════════ -->
+<div class="screen active" id="homeScreen">
+  <div class="home-logo">MemoryCode</div>
+  <div class="home-sub">Train Your Memory · Beat The Clock</div>
+  <div class="mode-grid">
+    <div class="mode-card" onclick="startGame('A')">
+      <div class="mode-icon">🧠</div>
+      <div class="mode-title">Khaldoon</div>
+      <div class="mode-desc">
+        10 Questions · Strings 7–10 chars<br>
+        Progressive difficulty · Memo time 9s→6s<br>
+        4 options per question
+      </div>
+      <div class="mode-badge badge-normal">MID – EASY · MAX 100 PTS</div>
+    </div>
+    <div class="mode-card extreme" onclick="startGame('C')">
+      <div class="mode-icon">🔥</div>
+      <div class="mode-title">Khalifa</div>
+      <div class="mode-desc">
+        10 Questions · Strings 9–13 chars<br>
+        Fixed 15s memo · Ultra-similar options<br>
+        6 options · 1-char difference only
+      </div>
+      <div class="mode-badge badge-extreme">EXTREME · MAX 100 PTS</div>
+    </div>
+  </div>
+  <div class="highscores" id="highscoresDisplay"></div>
+</div>
+
+<!-- ══════════════ GAME SCREEN ══════════════ -->
+<div class="screen" id="gameScreen">
+  <div class="game-container">
+
+    <div class="progress-bar-wrap">
+      <div class="progress-dots" id="progressDots"></div>
+      <div class="q-label" id="qLabel">Q 1/10</div>
+    </div>
+
+    <div style="text-align:center">
+      <span class="mode-tag" id="modeTag"></span>
+    </div>
+
+    <!-- MEMORIZE PHASE -->
+    <div id="memoPhase">
+      <div class="memo-card">
+        <div class="memo-label"><i class="fas fa-eye"></i> Memorize This String</div>
+        <div class="memo-string" id="memoString">AA2aTyY</div>
+        <div class="memo-hint">It will disappear — then pick the right one!</div>
+        <div class="difficulty-badge" id="diffBadge"></div>
+      </div>
+      <div class="timer-wrap">
+        <div class="timer-ring">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle class="timer-bg" cx="40" cy="40" r="34"/>
+            <circle class="timer-fg" id="memoTimerFg" cx="40" cy="40" r="34"
+              stroke-dasharray="213.6" stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-num" id="memoTimerNum">10</div>
+        </div>
+        <div class="timer-label">Memorize</div>
+      </div>
+    </div>
+
+    <!-- MCQ PHASE -->
+    <div id="mcqPhase" style="display:none">
+      <div class="mcq-question"><i class="fas fa-question-circle"></i> Which string did you see?</div>
+      <div class="options-grid" id="optionsGrid"></div>
+      <div class="feedback-msg" id="feedbackMsg"></div>
+      <div class="timer-wrap">
+        <div class="timer-ring">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle class="timer-bg" cx="40" cy="40" r="34"/>
+            <circle class="timer-fg" id="mcqTimerFg" cx="40" cy="40" r="34"
+              stroke-dasharray="213.6" stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-num" id="mcqTimerNum">15</div>
+        </div>
+        <div class="timer-label">Answer</div>
+      </div>
+      <button class="skip-btn" id="skipBtn"><i class="fas fa-forward"></i> Skip Question (counts as wrong)</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ SCORE SCREEN ══════════════ -->
+<div class="screen" id="scoreScreen">
+  <div class="score-card">
+    <div class="score-title">Session Complete!</div>
+    <div class="score-big" id="scoreBig">80</div>
+    <div class="score-sub" id="scoreSub">You got 8/10 correct</div>
+    <div class="score-breakdown">
+      <div class="sb-item"><div class="sb-num green" id="sbCorrect">8</div><div class="sb-lbl">Correct</div></div>
+      <div class="sb-item"><div class="sb-num red" id="sbWrong">2</div><div class="sb-lbl">Wrong</div></div>
+      <div class="sb-item"><div class="sb-num" id="sbStreak" style="color:var(--accent3)">5</div><div class="sb-lbl">Best Streak</div></div>
+    </div>
+    <div class="eligible-msg" id="eligibleMsg" style="display:none">
+      <h3>🏆 Eligible for Test 2!</h3>
+      <p>Outstanding performance! You've proven your memory skills.</p>
+    </div>
+    <div class="score-btns">
+      <button class="btn-primary btn-cyan" id="test2Btn" style="display:none" onclick="goTest2()"><i class="fas fa-trophy"></i> Go to Test 2</button>
+      <button class="btn-primary btn-purple" onclick="playAgain()"><i class="fas fa-redo"></i> Play Again</button>
+      <button class="btn-outline" onclick="goHome()"><i class="fas fa-home"></i> Change Mode</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">sahro – All rights reserved</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   MEMORY CODE GAME – Full Implementation v3
+   Modes: Khaldoon/A (7-10 chars, 4 opts, Mid-Easy) | Khalifa/C Extreme (9-13 chars, 6 opts)
+   Features: Menu, Pause, Skip always visible
+   ═══════════════════════════════════════════════════ */
+
+// ── PARTICLES ──
+(function(){
+  const canvas=document.getElementById('particles');
+  const ctx=canvas.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  for(let i=0;i<70;i++) pts.push({
+    x:Math.random()*1920,y:Math.random()*1080,
+    vx:(Math.random()-0.5)*0.25,vy:(Math.random()-0.5)*0.25,
+    r:Math.random()*2+0.5,a:Math.random()*0.6+0.1
+  });
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+      if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(0,245,255,${p.a*0.35})`;ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── AUDIO ──
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let audioCtx;
+function getAudio(){if(!audioCtx)audioCtx=new AudioCtx();return audioCtx;}
+function beep(freq,dur,type='sine',vol=0.15){
+  try{
+    const ac=getAudio(),o=ac.createOscillator(),g=ac.createGain();
+    o.connect(g);g.connect(ac.destination);
+    o.type=type;o.frequency.value=freq;
+    g.gain.setValueAtTime(vol,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+dur);
+    o.start();o.stop(ac.currentTime+dur);
+  }catch(e){}
+}
+function playCorrect(){beep(880,0.12);setTimeout(()=>beep(1100,0.18),90);}
+function playWrong(){beep(180,0.35,'sawtooth',0.1);}
+function playTick(){beep(440,0.04,'sine',0.04);}
+function playSkip(){beep(300,0.15,'triangle',0.08);}
+
+// ── CHARACTER SETS ──
+const UPPER='ABCDEFGHJKLMNPQRSTUVWXYZ';
+const LOWER='abcdefghjkmnpqrstuvwxyz';
+const DIGIT='23456789';
+const ALL=UPPER+LOWER+DIGIT;
+
+function randChar(exclude=''){
+  let c;
+  do{c=ALL[Math.floor(Math.random()*ALL.length)];}while(c===exclude);
+  return c;
+}
+
+// ── STRING GENERATOR ──
+// Mode A: 7-10 chars | Extreme: 9-13 chars
+function genString(minLen,maxLen){
+  const len=minLen+Math.floor(Math.random()*(maxLen-minLen+1));
+  let s='';
+  // Guarantee at least 1 upper, 1 lower, 1 digit
+  s+=UPPER[Math.floor(Math.random()*UPPER.length)];
+  s+=LOWER[Math.floor(Math.random()*LOWER.length)];
+  s+=DIGIT[Math.floor(Math.random()*DIGIT.length)];
+  while(s.length<len) s+=ALL[Math.floor(Math.random()*ALL.length)];
+  // Shuffle
+  return s.split('').sort(()=>Math.random()-0.5).join('');
+}
+
+function buildPool(){
+  const pool={modeA:[],extreme:[]};
+  const seen=new Set();
+  // Mode A pool: 7-10 chars, 120 strings
+  while(pool.modeA.length<120){
+    const s=genString(7,10);
+    if(!seen.has(s)){seen.add(s);pool.modeA.push(s);}
+  }
+  // Extreme pool: 9-13 chars, 80 strings
+  while(pool.extreme.length<80){
+    const s=genString(9,13);
+    if(!seen.has(s)){seen.add(s);pool.extreme.push(s);}
+  }
+  return pool;
+}
+
+// ── DISTRACTOR GENERATOR ──
+// extreme=true → only 1-char change, same length enforced
+function makeDistractors(correct,count,extreme=false){
+  const distractors=new Set();
+  let attempts=0;
+  while(distractors.size<count&&attempts<800){
+    attempts++;
+    let arr=correct.split('');
+    // For extreme: always exactly 1 change; for normal: 1-2 changes
+    const numChanges=extreme?1:(Math.random()<0.4?1:2);
+    const positions=[];
+    while(positions.length<numChanges){
+      const p=Math.floor(Math.random()*arr.length);
+      if(!positions.includes(p))positions.push(p);
+    }
+    positions.forEach(p=>{
+      const op=Math.random();
+      if(extreme){
+        // Extreme: only case flip or single char swap
+        if(op<0.5&&arr[p]!==arr[p].toUpperCase()&&arr[p].match(/[a-z]/)){
+          arr[p]=arr[p].toUpperCase();
+        } else if(op<0.75&&arr[p]!==arr[p].toLowerCase()&&arr[p].match(/[A-Z]/)){
+          arr[p]=arr[p].toLowerCase();
+        } else {
+          arr[p]=randChar(arr[p]);
+        }
+      } else {
+        // Normal: char change, case flip, or adjacent swap
+        if(op<0.5){
+          arr[p]=randChar(arr[p]);
+        } else if(op<0.75){
+          arr[p]=arr[p]===arr[p].toUpperCase()?arr[p].toLowerCase():arr[p].toUpperCase();
+        } else {
+          const q=(p+1)%arr.length;
+          [arr[p],arr[q]]=[arr[q],arr[p]];
+        }
+      }
+    });
+    const d=arr.join('');
+    if(d!==correct&&!distractors.has(d)&&d.length===correct.length)distractors.add(d);
+  }
+  return [...distractors].slice(0,count);
+}
+
+// ── MEMO TIME SCHEDULE (Mode A) ──
+// Q1:9s Q2:8s Q3:8s Q4:7s Q5:7s Q6:6s Q7+:6s  (harder than before)
+const MEMO_SCHEDULE=[9,8,8,7,7,6,6,6,6,6];
+function getMemoTime(qIndex,mode){
+  if(mode==='C')return 15;
+  return MEMO_SCHEDULE[Math.min(qIndex,MEMO_SCHEDULE.length-1)];
+}
+
+// ── GAME STATE ──
+let pool,currentMode;
+let questions=[],currentQ=0,score=0,correctCount=0,wrongCount=0;
+let bestStreak=0,streak=0;
+let memoTimer=null,mcqTimer=null;
+let memoTimeLeft=0,mcqTimeLeft=0,memoTotalTime=0,mcqTotalTime=15;
+let isPaused=false;
+let answered=false;
+let lastFirstQ=localStorage.getItem('lastFirstQ')||'';
+let highScores=JSON.parse(localStorage.getItem('highScores')||'{"A":0,"C":0}');
+
+// ── INIT ──
+function init(){
+  pool=buildPool();
+  renderHighScores();
+}
+
+function renderHighScores(){
+  document.getElementById('highscoresDisplay').innerHTML=`
+    <div class="hs-card"><div class="hs-label">Khaldoon Best</div><div class="hs-val">${highScores.A}</div></div>
+    <div class="hs-card"><div class="hs-label">Khalifa Best</div><div class="hs-val">${highScores.C}</div></div>
+  `;
+}
+
+// ── START GAME ──
+function startGame(mode){
+  currentMode=mode;
+  score=0;correctCount=0;wrongCount=0;bestStreak=0;streak=0;
+  currentQ=0;answered=false;isPaused=false;
+  clearAllTimers();
+
+  // Pick source pool
+  const src=mode==='C'?[...pool.extreme]:[...pool.modeA];
+  // Shuffle
+  for(let i=src.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [src[i],src[j]]=[src[j],src[i]];
+  }
+  // Ensure first Q differs from last session
+  if(src[0]===lastFirstQ&&src.length>1){
+    const swap=1+Math.floor(Math.random()*(src.length-1));
+    [src[0],src[swap]]=[src[swap],src[0]];
+  }
+  questions=src.slice(0,10);
+  lastFirstQ=questions[0];
+  localStorage.setItem('lastFirstQ',lastFirstQ);
+
+  // UI setup
+  showScreen('gameScreen');
+  document.getElementById('gameHeader').style.display='flex';
+  document.getElementById('pauseBtn').innerHTML='<i class="fas fa-pause"></i>';
+  document.getElementById('pauseBtn').classList.remove('active-pause');
+
+  const tag=document.getElementById('modeTag');
+  if(mode==='C'){
+    tag.className='mode-tag extreme';
+    tag.innerHTML='<i class="fas fa-fire"></i> KHALIFA – EXTREME';
+  } else {
+    tag.className='mode-tag normal';
+    tag.innerHTML='<i class="fas fa-brain"></i> KHALDOON – MID · EASY';
+  }
+
+  buildProgressDots();
+  loadQuestion();
+}
+
+function buildProgressDots(){
+  document.getElementById('progressDots').innerHTML=
+    questions.map((_,i)=>`<div class="dot" id="dot${i}"></div>`).join('');
+}
+function updateDot(i,state){
+  const d=document.getElementById('dot'+i);
+  if(d)d.className='dot '+state;
+}
+
+// ── LOAD QUESTION ──
+function loadQuestion(){
+  answered=false;
+  clearAllTimers();
+
+  const total=questions.length;
+  document.getElementById('qLabel').textContent=`Q ${currentQ+1}/${total}`;
+  document.getElementById('headerQLabel').textContent=`Q ${currentQ+1}/${total}`;
+  document.getElementById('headerScore').textContent=`${score} pts`;
+  updateDot(currentQ,'current');
+
+  // Show memo phase, hide MCQ
+  document.getElementById('memoPhase').style.display='block';
+  document.getElementById('mcqPhase').style.display='none';
+  document.getElementById('feedbackMsg').style.display='none';
+  document.getElementById('skipBtn').disabled=true; // disabled during memo
+
+  // Skip header btn: disabled during memo
+  document.getElementById('skipHeaderBtn').disabled=true;
+  document.getElementById('skipHeaderBtn').style.opacity='0.4';
+
+  const str=questions[currentQ];
+  const memoEl=document.getElementById('memoString');
+  memoEl.textContent=str;
+  memoEl.style.animation='none';
+  void memoEl.offsetWidth;
+  memoEl.style.animation='fadeInScale 0.5s ease';
+
+  // Difficulty badge
+  const badge=document.getElementById('diffBadge');
+  if(currentMode==='C'){
+    badge.className='difficulty-badge diff-extreme';
+    badge.textContent='⚡ EXTREME';
+  } else if(currentQ>=6){
+    badge.className='difficulty-badge diff-hard';
+    badge.textContent='🔴 HARD';
+  } else if(currentQ>=3){
+    badge.className='difficulty-badge diff-hard';
+    badge.textContent='🟡 MEDIUM';
+  } else {
+    badge.className='difficulty-badge diff-easy';
+    badge.textContent='🟢 NORMAL';
+  }
+
+  const memoTime=getMemoTime(currentQ,currentMode);
+  memoTotalTime=memoTime;
+  startMemoTimer(memoTime);
+}
+
+// ── MEMO TIMER ──
+function startMemoTimer(seconds){
+  memoTimeLeft=seconds;
+  updateTimerRing('memo',seconds,seconds);
+  document.getElementById('memoTimerNum').textContent=seconds;
+
+  memoTimer=setInterval(()=>{
+    if(isPaused)return;
+    memoTimeLeft--;
+    updateTimerRing('memo',memoTimeLeft,memoTotalTime);
+    document.getElementById('memoTimerNum').textContent=memoTimeLeft;
+    if(memoTimeLeft<=3)playTick();
+    if(memoTimeLeft<=0){clearInterval(memoTimer);showMCQ();}
+  },1000);
+}
+
+// ── SHOW MCQ ──
+function showMCQ(){
+  document.getElementById('memoPhase').style.display='none';
+  document.getElementById('mcqPhase').style.display='block';
+  document.getElementById('skipBtn').disabled=false;
+  document.getElementById('skipHeaderBtn').disabled=false;
+  document.getElementById('skipHeaderBtn').style.opacity='1';
+
+  const correct=questions[currentQ];
+  const isExtreme=currentMode==='C';
+  // Khaldoon (Mode A): 4 options; Khalifa (Extreme): 6 options
+  const numOptions=isExtreme?6:4;
+  const distractors=makeDistractors(correct,numOptions-1,isExtreme);
+
+  const opts=[correct,...distractors];
+  for(let i=opts.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [opts[i],opts[j]]=[opts[j],opts[i]];
+  }
+
+  const grid=document.getElementById('optionsGrid');
+  // For 6 options use 2-col, for 5 use 2-col (last one spans)
+  grid.style.gridTemplateColumns='1fr 1fr';
+  grid.innerHTML=opts.map((o,i)=>`
+    <button class="option-btn" id="opt${i}" onclick="selectAnswer('${o}','${correct}',${i})">${o}</button>
+  `).join('');
+
+  mcqTotalTime=15;
+  startMCQTimer(15);
+}
+
+// ── MCQ TIMER ──
+function startMCQTimer(seconds){
+  mcqTimeLeft=seconds;
+  updateTimerRing('mcq',seconds,seconds);
+  document.getElementById('mcqTimerNum').textContent=seconds;
+
+  mcqTimer=setInterval(()=>{
+    if(isPaused)return;
+    mcqTimeLeft--;
+    updateTimerRing('mcq',mcqTimeLeft,mcqTotalTime);
+    document.getElementById('mcqTimerNum').textContent=mcqTimeLeft;
+    if(mcqTimeLeft<=5)playTick();
+    if(mcqTimeLeft<=0){clearInterval(mcqTimer);if(!answered)timeoutAnswer();}
+  },1000);
+}
+
+// ── SELECT ANSWER ──
+function selectAnswer(chosen,correct,idx){
+  if(answered)return;
+  answered=true;
+  clearInterval(mcqTimer);
+  document.getElementById('skipBtn').disabled=true;
+  document.getElementById('skipHeaderBtn').disabled=true;
+  document.getElementById('skipHeaderBtn').style.opacity='0.4';
+  document.querySelectorAll('.option-btn').forEach(b=>b.disabled=true);
+
+  const isCorrect=chosen===correct;
+  const fb=document.getElementById('feedbackMsg');
+
+  if(isCorrect){
+    score+=10;correctCount++;streak++;
+    if(streak>bestStreak)bestStreak=streak;
+    document.getElementById('opt'+idx).classList.add('correct');
+    fb.className='feedback-msg correct';
+    fb.textContent='✓ Correct! +10 points';
+    fb.style.display='block';
+    playCorrect();
+    updateDot(currentQ,'done');
+  } else {
+    wrongCount++;streak=0;
+    document.getElementById('opt'+idx).classList.add('wrong');
+    document.getElementById('opt'+idx).classList.add('shake');
+    document.querySelectorAll('.option-btn').forEach(b=>{
+      if(b.textContent.trim()===correct)b.classList.add('correct');
+    });
+    fb.className='feedback-msg wrong';
+    fb.innerHTML=`✗ Wrong! The correct answer was <strong>${correct}</strong>`;
+    fb.style.display='block';
+    playWrong();
+    updateDot(currentQ,'wrong');
+  }
+
+  document.getElementById('headerScore').textContent=`${score} pts`;
+  setTimeout(nextQuestion,2000);
+}
+
+// ── TIMEOUT ──
+function timeoutAnswer(){
+  if(answered)return;
+  answered=true;
+  document.getElementById('skipBtn').disabled=true;
+  document.getElementById('skipHeaderBtn').disabled=true;
+  document.getElementById('skipHeaderBtn').style.opacity='0.4';
+  wrongCount++;streak=0;
+  const correct=questions[currentQ];
+  document.querySelectorAll('.option-btn').forEach(b=>{
+    b.disabled=true;
+    if(b.textContent.trim()===correct)b.classList.add('correct');
+  });
+  const fb=document.getElementById('feedbackMsg');
+  fb.className='feedback-msg wrong';
+  fb.innerHTML=`⏱ Time's up! The answer was <strong>${correct}</strong>`;
+  fb.style.display='block';
+  playWrong();
+  updateDot(currentQ,'wrong');
+  setTimeout(nextQuestion,2000);
+}
+
+// ── SKIP (in-card button) ──
+document.getElementById('skipBtn').addEventListener('click',doSkip);
+// ── SKIP (header button) ──
+document.getElementById('skipHeaderBtn').addEventListener('click',doSkip);
+
+function doSkip(){
+  if(answered)return;
+  // Only skip during MCQ phase
+  if(document.getElementById('mcqPhase').style.display==='none')return;
+  clearInterval(mcqTimer);
+  playSkip();
+  timeoutAnswer();
+}
+
+// ── NEXT QUESTION ──
+function nextQuestion(){
+  currentQ++;
+  if(currentQ>=questions.length)endGame();
+  else loadQuestion();
+}
+
+// ── END GAME ──
+function endGame(){
+  clearAllTimers();
+  document.getElementById('gameHeader').style.display='none';
+  showScreen('scoreScreen');
+
+  const total=questions.length;
+  const maxScore=total*10;
+  document.getElementById('scoreBig').textContent=score;
+  document.getElementById('scoreSub').textContent=`You got ${correctCount}/${total} correct – Score: ${score}/${maxScore}`;
+  document.getElementById('sbCorrect').textContent=correctCount;
+  document.getElementById('sbWrong').textContent=wrongCount;
+  document.getElementById('sbStreak').textContent=bestStreak;
+
+  if(score>(highScores[currentMode]||0)){
+    highScores[currentMode]=score;
+    localStorage.setItem('highScores',JSON.stringify(highScores));
+  }
+
+  const eligible=correctCount>=8;
+  document.getElementById('eligibleMsg').style.display=eligible?'block':'none';
+  document.getElementById('test2Btn').style.display=eligible?'inline-block':'none';
+}
+
+function goTest2(){alert('🏆 Test 2 coming soon – you have proven your skill!');}
+function playAgain(){startGame(currentMode);}
+function goHome(){
+  clearAllTimers();
+  isPaused=false;
+  document.getElementById('gameHeader').style.display='none';
+  document.getElementById('pauseOverlay').classList.remove('open');
+  document.getElementById('menuOverlay').classList.remove('open');
+  showScreen('homeScreen');
+  renderHighScores();
+}
+
+// ── TIMER RING ──
+function updateTimerRing(which,current,total){
+  const circ=213.6;
+  const fg=document.getElementById(which+'TimerFg');
+  fg.style.strokeDashoffset=circ-(current/total)*circ;
+  fg.className='timer-fg';
+  const r=current/total;
+  if(r<=0.25)fg.classList.add('danger');
+  else if(r<=0.5)fg.classList.add('warning');
+}
+
+// ── PAUSE ──
+document.getElementById('pauseBtn').addEventListener('click',togglePause);
+document.getElementById('resumeBtn').addEventListener('click',()=>{
+  if(isPaused)togglePause();
+});
+document.getElementById('pauseMenuBtn').addEventListener('click',()=>{
+  document.getElementById('pauseOverlay').classList.remove('open');
+  document.getElementById('menuOverlay').classList.add('open');
+});
+
+function togglePause(){
+  isPaused=!isPaused;
+  const overlay=document.getElementById('pauseOverlay');
+  const btn=document.getElementById('pauseBtn');
+  if(isPaused){
+    overlay.classList.add('open');
+    btn.innerHTML='<i class="fas fa-play"></i>';
+    btn.classList.add('active-pause');
+  } else {
+    overlay.classList.remove('open');
+    btn.innerHTML='<i class="fas fa-pause"></i>';
+    btn.classList.remove('active-pause');
+  }
+}
+
+// ── MENU ──
+document.getElementById('menuBtn').addEventListener('click',()=>{
+  if(!isPaused){isPaused=true;document.getElementById('pauseBtn').innerHTML='<i class="fas fa-play"></i>';document.getElementById('pauseBtn').classList.add('active-pause');}
+  document.getElementById('menuOverlay').classList.add('open');
+});
+document.getElementById('menuClose').addEventListener('click',closeMenu);
+document.getElementById('menuResume').addEventListener('click',()=>{closeMenu();if(isPaused)togglePause();});
+document.getElementById('menuRestart').addEventListener('click',()=>{closeMenu();startGame(currentMode);});
+document.getElementById('menuHome').addEventListener('click',()=>{closeMenu();goHome();});
+document.getElementById('menuClear').addEventListener('click',()=>{
+  if(confirm('Clear all saved data (high scores, history)?')){
+    localStorage.clear();
+    highScores={A:0,C:0};
+    lastFirstQ='';
+    closeMenu();goHome();
+  }
+});
+
+function closeMenu(){
+  document.getElementById('menuOverlay').classList.remove('open');
+  isPaused=false;
+  document.getElementById('pauseBtn').innerHTML='<i class="fas fa-pause"></i>';
+  document.getElementById('pauseBtn').classList.remove('active-pause');
+}
+
+// ── UTILS ──
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function clearAllTimers(){clearInterval(memoTimer);clearInterval(mcqTimer);}
+
+// ── BOOT ──
+init();
+</script>
+</body>
+</html>
